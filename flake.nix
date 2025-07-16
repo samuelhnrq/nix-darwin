@@ -30,25 +30,30 @@
       # List packages installed in system profile. To search by name, run:
       # $ nix-env -qaP | grep wget
       environment.systemPackages =
-        [ ];
+        [ 
+          pkgs.git
+        ];
 
       environment.pathsToLink = [ "/share/zsh" ];
 
       # Necessary for using flakes on this system.
       nix.settings.experimental-features = "nix-command flakes";
       system.primaryUser = "samosaara";
-      users.users.samosaara.home = /Users/samosaara;
-      users.users.samosaara.shell = pkgs.fish;
-
-      # Enable alternative shell support in nix-darwin.
+      fonts.packages = [ pkgs.nerd-fonts.fira-code pkgs.nerd-fonts.blex-mono ];
+      users.users.samosaara = {
+        home = /Users/samosaara;
+      };
+      environment.shells = [ "${pkgs.fish}/bin/fish" ];
       programs.fish.enable = true;
-
       # Set Git commit hash for darwin-version.
       system.configurationRevision = self.rev or self.dirtyRev or null;
 
       # Used for backwards compatibility, please read the changelog before changing.
       # $ darwin-rebuild changelog
       system.stateVersion = 6;
+      environment.extraInit = ''
+        export SSH_AUTH_SOCK='/Users/samosaara/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock';
+      '';
 
       # The platform the configuration will be used on.
       nixpkgs.hostPlatform = "aarch64-darwin";
@@ -76,7 +81,23 @@
         # With mutableTaps disabled, taps can no longer be added imperatively with `brew tap`.
         mutableTaps = false;
       };
-
+      homebrew.casks = [
+        "1password"
+        "ghostty"
+        "zen"
+        "ungoogled-chromium"
+        "slack"
+        "orbstack"
+        "jetbrains-toolbox"
+        "visual-studio-code"
+        "postman"
+      ];
+      homebrew.global.brewfile = true;
+      homebrew.global.autoUpdate = false;
+      homebrew.onActivation.autoUpdate = true;
+      homebrew.onActivation.upgrade = true;
+      
+      home-manager.backupFileExtension = ".bak";
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
 
@@ -86,21 +107,22 @@
 
           home.shell.enableFishIntegration = true;
           home.packages = [
+            # CLIs utils
             pkgs.ffmpeg
-            pkgs.vim
             pkgs.curl
-            pkgs.heroku
+            pkgs.httpie
+            # Coding stuff
+            pkgs.maven
+            pkgs.bun
+            pkgs.nixfmt-rfc-style
+            # lols
+            pkgs.lolcat
             pkgs.fortune
             pkgs.cowsay
-            pkgs.maven
-            pkgs.httpie
-            pkgs.bun
-            pkgs.nodejs
-            pkgs.nodePackages."@angular/cli"
-            pkgs.pnpm
-            pkgs.lolcat
             pkgs.sl
-            pkgs.mise
+            # Infra
+            pkgs.heroku
+            pkgs.postgresql_15
           ];
 
           fonts.fontconfig.enable = false;
@@ -108,6 +130,50 @@
           programs.fish.enable = true;
           programs.fish.functions = {
             fish_greeting = "fortune | cowsay";
+          };
+          home.sessionVariables = {
+            SSH_AUTH_SOCK = "/Users/samosaara/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
+          };
+
+          programs.mise = {
+            enable = true;
+            enableFishIntegration = true;
+            enableZshIntegration = true;
+            globalConfig = {
+                tools = {
+                    node = "24";
+                    pnpm = "10";
+                    yarn = "4";
+                    "npm:jscodeshift" = "17";
+                };
+            };
+          };
+
+          programs.neovim = {
+            enable = true;
+            defaultEditor = true;
+            viAlias = true;
+            vimAlias = true;
+            extraConfig = ''
+              set tabstop=4 shiftwidth=4 expandtab number relativenumber smartindent autoindent
+            '';
+		  };
+
+          programs.ghostty = {
+              enable = true;
+              package = pkgs.ghostty-bin;
+              enableFishIntegration = true;
+              enableZshIntegration = true;
+              settings = {
+                  command = "${pkgs.fish}/bin/fish";
+              };
+          };
+
+          programs.git = {
+              enable = true;
+              package = pkgs.gitFull;
+              userEmail = "samosaara" + "@gmail.com";
+              userName = "Samuel da Silva";
           };
       };
     };
