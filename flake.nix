@@ -59,15 +59,16 @@
           environment.shells = [ "${pkgs.fish}/bin/fish" ];
 
           services.ipfs = {
-            enable = true;
-            enableGarbageCollection = true;
-            package = pkgs.kubo.overrideAttrs (old: {
-              src = pkgs.fetchurl {
-                url = "https://github.com/ipfs/kubo/releases/download/${old.rev}/kubo-source.tar.gz";
-                # invasive workaround, should be fixed upstream soon and I can remove this package override
-                hash = "sha256-OubXaa2JWbEaakDV6pExm5PkiZ5XPd9uG+S4KwWb0xQ=";
-              };
-            });
+            enable = false;
+            #enableGarbageCollection = true;
+
+            #package = pkgs.kubo.overrideAttrs (old: {
+            #  src = pkgs.fetchurl {
+            #    url = "https://github.com/ipfs/kubo/releases/download/${old.rev}/kubo-source.tar.gz";
+            #    # invasive workaround, should be fixed upstream soon and I can remove this package override
+            #    hash = "sha256-OubXaa2JWbEaakDV6pExm5PkiZ5XPd9uG+S4KwWb0xQ=";
+            #  };
+            #});
           };
 
           programs.fish.enable = true;
@@ -117,6 +118,7 @@
             "jetbrains-toolbox"
             "visual-studio-code"
             "postman"
+            "foobar2000"
           ];
           homebrew.global.brewfile = true;
           homebrew.global.autoUpdate = false;
@@ -132,31 +134,34 @@
             home.username = "samosaara";
 
             home.shell.enableFishIntegration = true;
-            home.packages = [
+            home.packages = with pkgs; [
               # CLIs utils
-              pkgs.ffmpeg
-              pkgs.curl
-              pkgs.httpie
+              ffmpeg
+              chromaprint
+              curl
+              httpie
               # Coding stuff
-              pkgs.maven
-              pkgs.bun
-              pkgs.nixfmt-rfc-style
+              maven
+              bun
+              nixfmt-rfc-style
               # lols
-              pkgs.lolcat
-              pkgs.fortune
-              pkgs.cowsay
-              pkgs.sl
+              lolcat
+              fortune
+              cowsay
+              sl
               # Infra
-              pkgs.heroku
-              pkgs.postgresql_15
-              pkgs.flyway
+              heroku
+              postgresql_15
+              flyway
             ];
 
             fonts.fontconfig.enable = false;
 
-            programs.fish.enable = true;
-            programs.fish.functions = {
-              fish_greeting = "fortune | cowsay";
+            programs.fish = {
+              enable = true;
+              functions = {
+                fish_greeting = "fortune | cowsay";
+              };
             };
             home.sessionVariables = {
               SSH_AUTH_SOCK = "/Users/samosaara/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
@@ -182,6 +187,8 @@
                 pkgs.beets.override {
                   pluginOverrides = {
                     lyrics.enable = true;
+                    chroma.enable = true;
+                    scrub.enable = true;
                     embedart.enable = true;
                     fetchart.enable = true;
                     fish.enable = true;
@@ -190,6 +197,63 @@
                   };
                 }
               );
+              settings = {
+                plugins = [
+                  "chroma"
+                  "scrub"
+                  "convert"
+                  "lyrics"
+                  "fetchart"
+                  "embedart"
+                  "replaygain"
+                  "fish"
+                ];
+                directory = "~/Music/beets/songs";
+                library = "~/Music/beets/library.db";
+                import = {
+                  move = true;
+                };
+                fetchart = {
+                  enforce_ratio = true;
+                  sources = "itunes amazon coverart *";
+                };
+                embedart = {
+                  maxwidth = 1024;
+                  quality = 75;
+                  remove_art_file = true;
+                };
+                lyrics = {
+                  auto = true;
+                  synced = true;
+                };
+                match = {
+                  preferred = {
+                    countries = [
+                      "US"
+                      "GB|UK"
+                    ];
+                    media = [
+                      "CD"
+                      "Digital Media|File"
+                    ];
+                    original_year = true;
+                  };
+                };
+                chroma = {
+                  auto = true;
+                };
+                convert = {
+                  auto = true;
+                  never_convert_lossy_files = true;
+                  command = "ffmpeg -i $source -y -vn -aq 0 $dest";
+                  extension = "mp3";
+                };
+                replaygain = {
+                  backend = "ffmpeg";
+                  overwrite = true;
+                  auto = true;
+                };
+              };
             };
 
             programs.neovim = {
@@ -217,6 +281,17 @@
               package = pkgs.gitFull;
               userEmail = "samosaara" + "@gmail.com";
               userName = "Samuel da Silva";
+              extraConfig = {
+                gpg = {
+                  format = "ssh";
+                };
+                "gpg \"ssh\"" = {
+                  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
+                };
+                commit = {
+                  gpgsign = true;
+                };
+              };
             };
           };
         };
